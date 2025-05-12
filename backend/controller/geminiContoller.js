@@ -17,8 +17,6 @@
 // const genAI = new GoogleGenerativeAI(apiKey);
 // const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
-
-
 // // Helper function to convert file to base64
 // function fileToGenerativePart(buffer, mimeType) {
 //   return {
@@ -120,7 +118,7 @@ function fileToGenerativePart(buffer, mimeType) {
   return {
     inlineData: {
       data: buffer.toString("base64"),
-      mimeType
+      mimeType,
     },
   };
 }
@@ -159,7 +157,7 @@ export const evaluateResume = async (req, res) => {
                 educationalBackground: { type: "string" },
                 professionalDetails: { type: "string" },
                 electionExperience: { type: "string" },
-                criminalCaseStatus: { type: "string" }
+                criminalCaseStatus: { type: "string" },
               },
               required: [
                 "fullName",
@@ -169,8 +167,8 @@ export const evaluateResume = async (req, res) => {
                 "educationalBackground",
                 "professionalDetails",
                 "electionExperience",
-                "criminalCaseStatus"
-              ]
+                "criminalCaseStatus",
+              ],
             },
             scoringBreakdown: {
               type: "object",
@@ -182,8 +180,8 @@ export const evaluateResume = async (req, res) => {
                 totalScore: { type: "number" },
                 assessment: {
                   type: "string",
-                  enum: ["Excellent", "Good", "Average", "Poor"]
-                }
+                  enum: ["Excellent", "Good", "Average", "Poor"],
+                },
               },
               required: [
                 "criminalScore",
@@ -191,8 +189,8 @@ export const evaluateResume = async (req, res) => {
                 "educationScore",
                 "performanceScore",
                 "totalScore",
-                "assessment"
-              ]
+                "assessment",
+              ],
             },
             ipcCriminalityAssessment: {
               type: "object",
@@ -212,22 +210,22 @@ export const evaluateResume = async (req, res) => {
                           "Non-Cognizable",
                           "Bailable",
                           "Non-Bailable",
-                          "Serious"
-                        ]
+                          "Serious",
+                        ],
                       },
-                      offenseSummary: { type: "string" }
+                      offenseSummary: { type: "string" },
                     },
-                    required: ["section", "severityLevel", "offenseSummary"]
-                  }
+                    required: ["section", "severityLevel", "offenseSummary"],
+                  },
                 },
-                legalBackgroundJudgment: { type: "string" }
+                legalBackgroundJudgment: { type: "string" },
               },
-              required: ["ipcSections", "legalBackgroundJudgment"]
-            }
+              required: ["ipcSections", "legalBackgroundJudgment"],
+            },
           },
-          required: ["summary", "scoringBreakdown", "ipcCriminalityAssessment"]
-        }
-      }
+          required: ["summary", "scoringBreakdown", "ipcCriminalityAssessment"],
+        },
+      },
     });
 
     // Prepare PDF as multimodal content part
@@ -302,13 +300,13 @@ Based on any IPC sections mentioned in the document, identify:
       const requiredTopLevelKeys = [
         "summary",
         "scoringBreakdown",
-        "ipcCriminalityAssessment"
+        "ipcCriminalityAssessment",
       ];
 
       // Create a case-insensitive check
-      const parsedKeys = Object.keys(parsed).map(key => key.toLowerCase());
-      
-      requiredTopLevelKeys.forEach(key => {
+      const parsedKeys = Object.keys(parsed).map((key) => key.toLowerCase());
+
+      requiredTopLevelKeys.forEach((key) => {
         if (!parsedKeys.includes(key.toLowerCase())) {
           throw new Error(`Missing required key: ${key}`);
         }
@@ -318,7 +316,8 @@ Based on any IPC sections mentioned in the document, identify:
       const normalizedParsed = {
         summary: parsed.summary || parsed.Summary,
         scoringBreakdown: parsed.scoringBreakdown || parsed.ScoringBreakdown,
-        ipcCriminalityAssessment: parsed.ipcCriminalityAssessment || parsed.IPCCriminalityAssessment
+        ipcCriminalityAssessment:
+          parsed.ipcCriminalityAssessment || parsed.IPCCriminalityAssessment,
       };
 
       // Generate a unique storage key
@@ -332,25 +331,27 @@ Based on any IPC sections mentioned in the document, identify:
       });
     } catch (parseError) {
       console.error("JSON parse error:", parseError.message);
+      console.error("Gemini raw response:", response); // Debugging
+      res
+        .status(500)
+        .json({ error: "Failed to parse Gemini response as JSON." });
       console.error("Gemini raw response:", response);
       res.status(500).json({
         error: "Failed to parse Gemini response. Please try again.",
-        rawResponse: response
+        rawResponse: response,
       });
     }
 
     // Clean up: remove uploaded file after processing
     fs.unlinkSync(file.path);
-
   } catch (error) {
     console.error("Gemini error:", error.message || error);
     res.status(500).json({
       error: "Something went wrong with affidavit analysis.",
-      details: error.message
+      details: error.message,
     });
   }
 };
-
 
 // export const evaluateResume = async (req, res) => {
 //   try {
