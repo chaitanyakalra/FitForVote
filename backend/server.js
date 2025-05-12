@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import resumeRoutes from "./routes/resumeRoutes.js";
+import resumeRoutes from "./routes/api.js";
 
 const app = express();
 app.use(cors());

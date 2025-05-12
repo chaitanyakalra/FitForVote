@@ -21,12 +21,14 @@ export default function ResumeUploader() {
     formData.append("resume", file);
 
     try {
-      const res = await axios.post("http://localhost:3001/api/uploadResume", formData, {
+      const res = await axios.post("http://localhost:3001/api/evaluate", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-      setResult(res.data.parsed); // Adjust this if backend response format is different
+      setResult(res.data.parsed);
+ // ✅ correct key as per your backend
+ // Adjust this if backend response format is different
     } catch (err) {
       console.error(err);
       setError("Failed to upload or parse resume.");
