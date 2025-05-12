@@ -17,8 +17,6 @@
 // const genAI = new GoogleGenerativeAI(apiKey);
 // const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
-
-
 // // Helper function to convert file to base64
 // function fileToGenerativePart(buffer, mimeType) {
 //   return {
@@ -39,10 +37,10 @@
 
 //     // Read file buffer
 //     const fileBuffer = fs.readFileSync(file.path);
-    
+
 //     // Get Gemini model that supports multimodal input
 //     const model = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
-    
+
 //     // Prepare PDF as multimodal content part
 //     const filePart = fileToGenerativePart(fileBuffer, "application/pdf");
 
@@ -72,10 +70,10 @@
 //     // Generate content with both text prompt and PDF file
 //     const result = await model.generateContent([prompt, filePart]);
 //     let response = await result.response.text();
-    
+
 //     // Clean response: remove markdown code block formatting if present
 //     response = response.replace(/```json|```/g, "").trim();
-    
+
 //     try {
 //       const parsed = JSON.parse(response);
 //       res.json({ parsed });
@@ -84,10 +82,10 @@
 //       console.error("Gemini raw response:", response); // For debugging
 //       res.status(500).json({ error: "Failed to parse Gemini response as JSON." });
 //     }
-    
+
 //     // Clean up: remove uploaded file after processing
 //     fs.unlinkSync(file.path);
-    
+
 //   } catch (error) {
 //     console.error("Gemini error:", error.message || error);
 //     res.status(500).json({ error: "Something went wrong with resume evaluation." });
@@ -119,7 +117,7 @@ function fileToGenerativePart(buffer, mimeType) {
   return {
     inlineData: {
       data: buffer.toString("base64"),
-      mimeType
+      mimeType,
     },
   };
 }
@@ -136,8 +134,8 @@ export const evaluateResume = async (req, res) => {
     const fileBuffer = fs.readFileSync(file.path);
 
     // Use the latest recommended model
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-pro", 
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-pro",
       generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -153,8 +151,8 @@ export const evaluateResume = async (req, res) => {
                 educationalBackground: { type: "string" },
                 professionalDetails: { type: "string" },
                 electionExperience: { type: "string" },
-                criminalCaseStatus: { type: "string" }
-              }
+                criminalCaseStatus: { type: "string" },
+              },
             },
             "Scoring Breakdown": {
               type: "object",
@@ -164,30 +162,34 @@ export const evaluateResume = async (req, res) => {
                 EducationScore: { type: "number" },
                 PerformanceScore: { type: "number" },
                 TotalScore: { type: "number" },
-                Assessment: { type: "string" }
-              }
+                Assessment: { type: "string" },
+              },
             },
             "IPC Criminality Assessment": {
               type: "object",
               properties: {
-                IPCSections: { 
-                  type: "array", 
-                  items: { 
+                IPCSections: {
+                  type: "array",
+                  items: {
                     type: "object",
                     properties: {
                       section: { type: "string" },
                       severityLevel: { type: "string" },
-                      offenseSummary: { type: "string" }
-                    }
-                  }
+                      offenseSummary: { type: "string" },
+                    },
+                  },
                 },
-                LegalBackgroundJudgment: { type: "string" }
-              }
-            }
+                LegalBackgroundJudgment: { type: "string" },
+              },
+            },
           },
-          required: ["Summary", "Scoring Breakdown", "IPC Criminality Assessment"]
-        }
-      }
+          required: [
+            "Summary",
+            "Scoring Breakdown",
+            "IPC Criminality Assessment",
+          ],
+        },
+      },
     });
 
     // Prepare PDF as multimodal content part
@@ -257,15 +259,15 @@ Based on any IPC sections mentioned in the document, identify:
     try {
       // Parse the response
       const parsed = JSON.parse(response);
-      
+
       // Validate the parsed JSON has all required keys
       const requiredTopLevelKeys = [
-        "Summary", 
-        "Scoring Breakdown", 
-        "IPC Criminality Assessment"
+        "Summary",
+        "Scoring Breakdown",
+        "IPC Criminality Assessment",
       ];
-      
-      requiredTopLevelKeys.forEach(key => {
+
+      requiredTopLevelKeys.forEach((key) => {
         if (!parsed.hasOwnProperty(key)) {
           throw new Error(`Missing required key: ${key}`);
         }
@@ -279,15 +281,14 @@ Based on any IPC sections mentioned in the document, identify:
         .status(500)
         .json({ error: "Failed to parse Gemini response as JSON." });
       console.error("Gemini raw response:", response);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to parse Gemini response. Please try again.",
-        rawResponse: response
+        rawResponse: response,
       });
     }
 
     // Clean up: remove uploaded file after processing
     fs.unlinkSync(file.path);
-
   } catch (error) {
     console.error("Gemini error:", error.message || error);
     res
@@ -295,14 +296,6 @@ Based on any IPC sections mentioned in the document, identify:
       .json({ error: "Something went wrong with resume evaluation." });
   }
 };
-
-    res.status(500).json({ 
-      error: "Something went wrong with affidavit analysis.",
-      details: error.message 
-    });
-  }
-};
-
 
 // export const evaluateResume = async (req, res) => {
 //   try {
