@@ -14,8 +14,6 @@
 
 // export default App
 
-
-
 import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import ResumeUploader from "./components/resume-uploader.jsx";
@@ -24,6 +22,7 @@ import CandidateList from "./components/candidate-list.jsx";
 import CandidateProfile from "./components/candidate-profile.jsx";
 import LandingPage from "./components/landing-page.jsx";
 import { mockCandidates } from "./lib/mock-data.js";
+import "./App.css";
 
 function App() {
   const [candidates, setCandidates] = useState(mockCandidates);
@@ -52,7 +51,9 @@ function App() {
           path="/dashboard/candidate/:id"
           element={
             <DashboardLayout>
-              {candidates.length > 0 && <CandidateProfile candidate={candidates[0]} />}
+              {candidates.length > 0 && (
+                <CandidateProfile candidate={candidates[0]} />
+              )}
             </DashboardLayout>
           }
         />
@@ -65,7 +66,9 @@ function App() {
               <div className="max-w-4xl mx-auto p-6">
                 <h1 className="text-2xl font-bold mb-6">Resume Upload</h1>
                 <div className="bg-white rounded-lg shadow-md p-6">
-                  <ResumeUploader onUploadSuccess={(id) => console.log("Upload success:", id)} />
+                  <ResumeUploader
+                    onUploadSuccess={(id) => console.log("Upload success:", id)}
+                  />
                 </div>
               </div>
             </DashboardLayout>
