@@ -119,6 +119,7 @@ export default function ResumeUploader() {
       // Save to localStorage
       localStorage.setItem('candidateAffidavitStorageKey', storageKey);
       localStorage.setItem('candidateAffidavitData', JSON.stringify(parsed));
+      console.log("Stored data:", parsed);
       
       setResult(parsed);
     } catch (err) {

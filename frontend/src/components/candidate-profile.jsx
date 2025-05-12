@@ -1,7 +1,9 @@
 import ScoreBreakdownCard from "./score-breakdown-card.jsx"
 import LegalAssessmentCard from "./legal-assment-card.jsx"
+import { useEffect, useState } from "react"
 
 export default function CandidateProfile({ candidate }) {
+  const [candidateData, setCandidateData] = useState(null);
   // Determine color based on score
   const getScoreColor = (score) => {
     if (score < 0) return "bg-red-500"
@@ -22,13 +24,45 @@ export default function CandidateProfile({ candidate }) {
     return assessmentMap[assessment] || "bg-gray-100 text-gray-800"
   }
 
+  useEffect(() => {
+    const storedResult = localStorage.getItem('candidateAffidavitData');
+
+    if (storedResult) {
+      try {
+        const data = JSON.parse(storedResult);
+        setCandidateData(data);
+        console.log("Retrieved summary:", data.summary);
+        console.log("Scoring Breakdown:", data.scoringBreakdown);
+        console.log("IPC Criminality Assessment:", data.ipcCriminalityAssessment);
+  
+        // Example: accessing specific data
+        console.log("Candidate Name:", data.summary.fullName);
+        console.log("Criminal Score:", data.scoringBreakdown.criminalScore);
+        console.log("IPC Sections involved:");
+        data.ipcCriminalityAssessment.ipcSections.forEach(section => {
+          console.log(`- ${section.section}: ${section.offenseSummary} (${section.severityLevel})`);
+        });
+  
+      } catch (err) {
+        console.error("Failed to parse stored candidate data", err);
+      }
+    } else {
+      console.log("No candidate data found in localStorage.");
+    }
+  }, []);
+  
+  if (!candidateData) {
+    return <div className="p-6">Loading candidate data...</div>;
+  }
+  
+
   return (
     <div className="max-w-6xl mx-auto p-6">
       {/* Header Section */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{candidate.summary.fullName}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{candidateData.summary.fullName}</h1>
             <div className="flex flex-wrap gap-2 mt-2">
               <div className="flex items-center text-sm text-gray-600">
                 <svg
@@ -45,7 +79,7 @@ export default function CandidateProfile({ candidate }) {
                     d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                   />
                 </svg>
-                Age: {candidate.summary.age}
+                Age: {candidateData.summary.age}
               </div>
               <div className="flex items-center text-sm text-gray-600">
                 <svg
@@ -68,7 +102,7 @@ export default function CandidateProfile({ candidate }) {
                     d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                   />
                 </svg>
-                {candidate.summary.constituency}
+                {candidateData.summary.constituency}
               </div>
               <div className="flex items-center text-sm text-gray-600">
                 <svg
@@ -85,21 +119,21 @@ export default function CandidateProfile({ candidate }) {
                     d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                   />
                 </svg>
-                {candidate.summary.partyAffiliation}
+                {candidateData.summary.partyAffiliation}
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <div
-              className={`${getScoreColor(candidate.scoringBreakdown.totalScore)} text-white text-lg font-medium px-3 py-1.5 rounded-md`}
+              className={`${getScoreColor(candidateData.scoringBreakdown.totalScore)} text-white text-lg font-medium px-3 py-1.5 rounded-md`}
             >
-              Score: {candidate.scoringBreakdown.totalScore}
+              Score: {candidateData.scoringBreakdown.totalScore}
             </div>
             <div
-              className={`${getAssessmentBadge(candidate.scoringBreakdown.assessment)} text-sm font-medium px-3 py-1.5 rounded-md`}
+              className={`${getAssessmentBadge(candidateData.scoringBreakdown.assessment)} text-sm font-medium px-3 py-1.5 rounded-md`}
             >
-              {candidate.scoringBreakdown.assessment}
+              {candidateData.scoringBreakdown.assessment}
             </div>
           </div>
         </div>
@@ -115,22 +149,22 @@ export default function CandidateProfile({ candidate }) {
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Educational Background</h3>
-                <p className="mt-1">{candidate.summary.educationalBackground}</p>
+                <p className="mt-1">{candidateData.summary.educationalBackground}</p>
               </div>
 
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Professional Experience</h3>
-                <p className="mt-1">{candidate.summary.professionalDetails}</p>
+                <p className="mt-1">{candidateData.summary.professionalDetails}</p>
               </div>
 
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Election History</h3>
-                <p className="mt-1">{candidate.summary.electionExperience}</p>
+                <p className="mt-1">{candidateData.summary.electionExperience}</p>
               </div>
 
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Criminal Case Status</h3>
-                <p className="mt-1">{candidate.summary.criminalCaseStatus}</p>
+                <p className="mt-1">{candidateData.summary.criminalCaseStatus}</p>
               </div>
             </div>
           </div>
@@ -139,19 +173,19 @@ export default function CandidateProfile({ candidate }) {
         {/* Middle Column - Score Breakdown */}
         <div className="lg:col-span-1">
           <ScoreBreakdownCard
-            criminalScore={candidate.scoringBreakdown.criminalScore}
-            educationScore={candidate.scoringBreakdown.educationScore}
-            financialScore={candidate.scoringBreakdown.financialScore}
-            performanceScore={candidate.scoringBreakdown.performanceScore}
-            totalScore={candidate.scoringBreakdown.totalScore}
+            criminalScore={candidateData.scoringBreakdown.criminalScore}
+            educationScore={candidateData.scoringBreakdown.educationScore}
+            financialScore={candidateData.scoringBreakdown.financialScore}
+            performanceScore={candidateData.scoringBreakdown.performanceScore}
+            totalScore={candidateData.scoringBreakdown.totalScore}
           />
         </div>
 
         {/* Right Column - Legal Assessment */}
         <div className="lg:col-span-1">
           <LegalAssessmentCard
-            legalBackgroundJudgment={candidate.ipcCriminalityAssessment.legalBackgroundJudgment}
-            ipcSections={candidate.ipcCriminalityAssessment.ipcSections}
+            legalBackgroundJudgment={candidateData.ipcCriminalityAssessment.legalBackgroundJudgment}
+            ipcSections={candidateData.ipcCriminalityAssessment.ipcSections}
           />
         </div>
       </div>

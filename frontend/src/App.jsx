@@ -24,6 +24,7 @@ import CandidateList from "./components/candidate-list.jsx";
 import CandidateProfile from "./components/candidate-profile.jsx";
 import LandingPage from "./components/landing-page.jsx";
 import { mockCandidates } from "./lib/mock-data.js";
+import ResumeUploader2 from "./components/ResumeUploader.jsx";
 
 function App() {
   const [candidates, setCandidates] = useState(mockCandidates);
@@ -33,6 +34,9 @@ function App() {
       <Routes>
         {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/old" element={<ResumeUploader2 />} />
+
+        {/* <ResumeUploader2 /> */}
 
         {/* Dashboard */}
         <Route
@@ -56,6 +60,8 @@ function App() {
             </DashboardLayout>
           }
         />
+
+        <Route path="/profile" element={<CandidateProfile />} />
 
         {/* Resume Upload */}
         <Route
