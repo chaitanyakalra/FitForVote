@@ -1,10 +1,43 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import IPCSectionList from "./ipc-section-list"
 
 export default function LegalAssessmentCard({ legalBackgroundJudgment, ipcSections }) {
   const [expanded, setExpanded] = useState(true)
+
+
+  const [candidateData, setCandidateData] = useState(null);
+    useEffect(() => {
+      const storedResult = localStorage.getItem('candidateAffidavitData');
+  
+      if (storedResult) {
+        try {
+          const data = JSON.parse(storedResult);
+          setCandidateData(data);
+          console.log("Retrieved summary:", data.summary);
+          console.log("Scoring Breakdown:", data.scoringBreakdown);
+          console.log("IPC Criminality Assessment:", data.ipcCriminalityAssessment);
+  
+          // Example: accessing specific data
+          console.log("Candidate Name:", data.summary.fullName);
+          console.log("Criminal Score:", data.scoringBreakdown.criminalScore);
+          console.log("IPC Sections involved:");
+          data.ipcCriminalityAssessment.ipcSections.forEach(section => {
+            console.log(`- ${section.section}: ${section.offenseSummary} (${section.severityLevel})`);
+          });
+  
+        } catch (err) {
+          console.error("Failed to parse stored candidate data", err);
+        }
+      } else {
+        console.log("No candidate data found in localStorage.");
+      }
+    }, []);
+  
+    if (!candidateData) {
+      return <div className="p-6">Loading candidate data...</div>;
+    }
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 h-full">

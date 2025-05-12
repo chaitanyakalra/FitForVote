@@ -24,6 +24,9 @@ import LandingPage from "./components/landing-page.jsx";
 import { mockCandidates } from "./lib/mock-data.js";
 import "./App.css";
 import ResumeUploader2 from "./components/ResumeUploader.jsx";
+import IPCSectionList from "./components/ipc-section-list.jsx";
+import LegalAssessmentCard from "./components/legal-assment-card.jsx";
+import ScoreBreakdownCard from "./components/score-breakdown-card.jsx";
 
 function App() {
   const [candidates, setCandidates] = useState(mockCandidates);
@@ -33,7 +36,13 @@ function App() {
       <Routes>
         {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />
+
+        {/* TESTING */}
         <Route path="/old" element={<ResumeUploader2 />} />
+        <Route path="/ipc" element={<IPCSectionList />} />
+        <Route path="/legal" element={<LegalAssessmentCard />} />
+        <Route path="/profile" element={<CandidateProfile />} />
+        <Route path="/score" element={<ScoreBreakdownCard />} />
 
         {/* <ResumeUploader2 /> */}
 
@@ -62,7 +71,7 @@ function App() {
           }
         />
 
-        <Route path="/profile" element={<CandidateProfile />} />
+        
 
         {/* Resume Upload */}
         <Route
