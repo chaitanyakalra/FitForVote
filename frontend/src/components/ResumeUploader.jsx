@@ -107,7 +107,7 @@ export default function ResumeUploader() {
     formData.append("resume", file);
 
     try {
-      const res = await axios.post("http://localhost:3001/api/evaluate", formData, {
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/evaluate`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
+
+
 export default function ResumeUploader({ onUploadSuccess }) {
   const [file, setFile] = useState(null);
   const [result, setResult] = useState(null);
@@ -9,6 +11,14 @@ export default function ResumeUploader({ onUploadSuccess }) {
   const [loading, setLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const navigate = useNavigate();
+
+
+  useEffect(() => {
+    // Access the environment variable
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    console.log(backendUrl); // Should log the URL you set in the .env file
+    console.log("process", import.meta.env.VITE_BACKEND_URL);
+  }, []);
 
   // Load saved result from localStorage on component mount
   useEffect(() => {
@@ -79,7 +89,7 @@ export default function ResumeUploader({ onUploadSuccess }) {
 
     try {
       const res = await axios.post(
-        "http://localhost:3001/api/evaluate",
+        `${import.meta.env.VITE_BACKEND_URL}/api/evaluate`,
         formData,
         {
           headers: {
@@ -100,7 +110,7 @@ export default function ResumeUploader({ onUploadSuccess }) {
       if (onUploadSuccess) {
         onUploadSuccess(storageKey);
         const response = await fetch(
-          "http://localhost:3001/save/save-analysis",
+          `${import.meta.env.VITE_BACKEND_URL}/save/save-analysis`,
           {
             method: "POST",
             headers: {
@@ -142,9 +152,8 @@ export default function ResumeUploader({ onUploadSuccess }) {
       <h2 className="text-xl font-semibold mb-4">Upload Candidate Resume</h2>
 
       <div
-        className={`border-2 border-dashed rounded-lg p-8 text-center mb-4 transition-colors ${
-          dragActive ? "border-[#6c63ff] bg-[#6c63ff]/5" : "border-gray-300"
-        }`}
+        className={`border-2 border-dashed rounded-lg p-8 text-center mb-4 transition-colors ${dragActive ? "border-[#6c63ff] bg-[#6c63ff]/5" : "border-gray-300"
+          }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
