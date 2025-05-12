@@ -141,7 +141,7 @@ export const evaluateResume = async (req, res) => {
         responseSchema: {
           type: "object",
           properties: {
-            Summary: {
+            summary: {
               type: "object",
               properties: {
                 fullName: { type: "string" },
@@ -153,41 +153,71 @@ export const evaluateResume = async (req, res) => {
                 electionExperience: { type: "string" },
                 criminalCaseStatus: { type: "string" },
               },
+              required: [
+                "fullName",
+                "age",
+                "partyAffiliation",
+                "constituency",
+                "educationalBackground",
+                "professionalDetails",
+                "electionExperience",
+                "criminalCaseStatus",
+              ],
             },
-            "Scoring Breakdown": {
+            scoringBreakdown: {
               type: "object",
               properties: {
-                CriminalScore: { type: "number" },
-                FinancialScore: { type: "number" },
-                EducationScore: { type: "number" },
-                PerformanceScore: { type: "number" },
-                TotalScore: { type: "number" },
-                Assessment: { type: "string" },
+                criminalScore: { type: "number" },
+                financialScore: { type: "number" },
+                educationScore: { type: "number" },
+                performanceScore: { type: "number" },
+                totalScore: { type: "number" },
+                assessment: {
+                  type: "string",
+                  enum: ["Excellent", "Good", "Average", "Poor"],
+                },
               },
+              required: [
+                "criminalScore",
+                "financialScore",
+                "educationScore",
+                "performanceScore",
+                "totalScore",
+                "assessment",
+              ],
             },
-            "IPC Criminality Assessment": {
+            ipcCriminalityAssessment: {
               type: "object",
               properties: {
-                IPCSections: {
+                ipcSections: {
                   type: "array",
                   items: {
                     type: "object",
                     properties: {
                       section: { type: "string" },
-                      severityLevel: { type: "string" },
+                      severityLevel: {
+                        type: "string",
+                        enum: [
+                          "Petty",
+                          "Moderate",
+                          "Cognizable",
+                          "Non-Cognizable",
+                          "Bailable",
+                          "Non-Bailable",
+                          "Serious",
+                        ],
+                      },
                       offenseSummary: { type: "string" },
                     },
+                    required: ["section", "severityLevel", "offenseSummary"],
                   },
                 },
-                LegalBackgroundJudgment: { type: "string" },
+                legalBackgroundJudgment: { type: "string" },
               },
+              required: ["ipcSections", "legalBackgroundJudgment"],
             },
           },
-          required: [
-            "Summary",
-            "Scoring Breakdown",
-            "IPC Criminality Assessment",
-          ],
+          required: ["summary", "scoringBreakdown", "ipcCriminalityAssessment"],
         },
       },
     });
@@ -195,7 +225,7 @@ export const evaluateResume = async (req, res) => {
     // Prepare PDF as multimodal content part
     const filePart = fileToGenerativePart(fileBuffer, "application/pdf");
 
-    // Create detailed prompt
+    // Create detailed prompt (same as before)
     const prompt = `You are an expert analyst reviewing an Indian election candidate's affidavit. Carefully examine the PDF document and provide a comprehensive analysis following these guidelines:
 
 🟠 1. Candidate Summary:
@@ -260,20 +290,31 @@ Based on any IPC sections mentioned in the document, identify:
       // Parse the response
       const parsed = JSON.parse(response);
 
-      // Validate the parsed JSON has all required keys
+      // Validate the parsed JSON has all required keys (case-insensitive)
       const requiredTopLevelKeys = [
-        "Summary",
-        "Scoring Breakdown",
-        "IPC Criminality Assessment",
+        "summary",
+        "scoringBreakdown",
+        "ipcCriminalityAssessment",
       ];
 
+      // Create a case-insensitive check
+      const parsedKeys = Object.keys(parsed).map((key) => key.toLowerCase());
+
       requiredTopLevelKeys.forEach((key) => {
-        if (!parsed.hasOwnProperty(key)) {
+        if (!parsedKeys.includes(key.toLowerCase())) {
           throw new Error(`Missing required key: ${key}`);
         }
       });
 
-      res.json({ parsed });
+      // Normalize keys to match the expected structure
+      const normalizedParsed = {
+        summary: parsed.summary || parsed.Summary,
+        scoringBreakdown: parsed.scoringBreakdown || parsed.ScoringBreakdown,
+        ipcCriminalityAssessment:
+          parsed.ipcCriminalityAssessment || parsed.IPCCriminalityAssessment,
+      };
+
+      res.json({ parsed: normalizedParsed });
     } catch (parseError) {
       console.error("JSON parse error:", parseError.message);
       console.error("Gemini raw response:", response); // Debugging
@@ -291,9 +332,10 @@ Based on any IPC sections mentioned in the document, identify:
     fs.unlinkSync(file.path);
   } catch (error) {
     console.error("Gemini error:", error.message || error);
-    res
-      .status(500)
-      .json({ error: "Something went wrong with resume evaluation." });
+    res.status(500).json({
+      error: "Something went wrong with affidavit analysis.",
+      details: error.message,
+    });
   }
 };
 
