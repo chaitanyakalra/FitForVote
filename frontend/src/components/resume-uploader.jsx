@@ -1,155 +1,141 @@
-"use client"
-
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function ResumeUploader({ onUploadSuccess }) {
-  const [file, setFile] = useState(null)
-  const [result, setResult] = useState(null)
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [dragActive, setDragActive] = useState(false)
+  const [file, setFile] = useState(null);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const navigate = useNavigate();
 
   // Load saved result from localStorage on component mount
   useEffect(() => {
-    const storedStorageKey = localStorage.getItem("candidateAffidavitStorageKey")
-    const storedResult = localStorage.getItem("candidateAffidavitData")
+    const storedStorageKey = localStorage.getItem(
+      "candidateAffidavitStorageKey"
+    );
+    const storedResult = localStorage.getItem("candidateAffidavitData");
 
     if (storedStorageKey && storedResult) {
       try {
-        const parsedResult = JSON.parse(storedResult)
-        setResult(parsedResult)
+        const parsedResult = JSON.parse(storedResult);
+        setResult(parsedResult);
         if (onUploadSuccess) {
-          onUploadSuccess("stored-data-1") // Pass a mock ID for stored data
+          onUploadSuccess(storedStorageKey); // Pass the actual storage key
         }
       } catch (parseError) {
-        console.error("Error parsing saved result:", parseError)
+        console.error("Error parsing saved result:", parseError);
         // Clear invalid stored data
-        localStorage.removeItem("candidateAffidavitStorageKey")
-        localStorage.removeItem("candidateAffidavitData")
+        localStorage.removeItem("candidateAffidavitStorageKey");
+        localStorage.removeItem("candidateAffidavitData");
       }
     }
-  }, [onUploadSuccess])
+  }, [onUploadSuccess]);
 
   const handleDrag = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault();
+    e.stopPropagation();
 
     if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true)
+      setDragActive(true);
     } else if (e.type === "dragleave") {
-      setDragActive(false)
+      setDragActive(false);
     }
-  }
+  };
 
   const handleDrop = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setFile(e.dataTransfer.files[0])
+      setFile(e.dataTransfer.files[0]);
     }
-  }
+  };
 
   const handleUpload = async () => {
     if (!file) {
-      setError("Please select a file.")
-      return
+      setError("Please select a file.");
+      return;
     }
 
     // Validate file type
-    if (!file.type.includes("pdf")) {
-      setError("Please upload a PDF document.")
-      return
+    if (
+      !file.type.includes("pdf") &&
+      !file.type.includes("msword") &&
+      !file.type.includes("document")
+    ) {
+      setError("Please upload a PDF or Word document.");
+      return;
     }
 
-    setLoading(true)
-    setError("")
-    setResult(null)
+    setLoading(true);
+    setError("");
+    setResult(null);
+
+    const formData = new FormData();
+    formData.append("resume", file);
 
     try {
-      // For demo purposes, we'll simulate an API call
-      // In a real app, you would use axios or fetch to send the file to your backend
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      const res = await axios.post(
+        "http://localhost:3001/api/evaluate",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-      // Mock response data
-      const mockResponse = {
-        storageKey: "mock-storage-key-123",
-        parsed: {
-          summary: {
-            age: 52,
-            constituency: "Varanasi (Uttar Pradesh)",
-            criminalCaseStatus: "Pending cases under investigation and charges framed. No convictions.",
-            educationalBackground:
-              "Completed Class 10 (Secondary School Certificate) from Uttar Pradesh Madhyamik Shiksha Parishad.",
-            electionExperience:
-              "Contested 2017 Assembly elections independently (3,800 votes, 1.5%) and 2022 Panchayat elections for Zila Parishad ward (127 votes).",
-            fullName: "Ravi Pratap Singh",
-            partyAffiliation: "Pragati Jan Shakti Party (Registered, Unrecognized)",
-            professionalDetails:
-              "Owns multiple agricultural and commercial properties. Involved in real estate and security contracting. Annual income (as per ITR): ₹8.3 Lakhs. Movable assets: ₹14.7 Crores. Immovable Assets: ₹23.5 Crores. Liabilities: ₹1.2 Crores",
-          },
-          scoringBreakdown: {
-            assessment: "Poor",
-            criminalScore: -15,
-            educationScore: 2,
-            financialScore: 0,
-            performanceScore: 2,
-            totalScore: -11,
-          },
-          ipcCriminalityAssessment: {
-            ipcSections: [
-              {
-                offenseSummary: "Murder",
-                section: "IPC 302",
-                severityLevel: "Serious",
-              },
-              {
-                offenseSummary: "Criminal Intimidation",
-                section: "IPC 506",
-                severityLevel: "Cognizable",
-              },
-              {
-                offenseSummary: "Cheating",
-                section: "IPC 420",
-                severityLevel: "Cognizable",
-              },
-              {
-                offenseSummary: "Forgery for the purpose of cheating",
-                section: "IPC 467, 468",
-                severityLevel: "Cognizable",
-              },
-            ],
-            legalBackgroundJudgment:
-              "The candidate's legal background poses a significant concern due to serious charges like murder and cheating being under investigation or with charges framed. While the candidate claims these are politically motivated, the severity of the accusations warrants attention.",
-          },
-        },
-      }
+      // Store both the storage key and the parsed data
+      const { storageKey, parsed } = res.data;
 
       // Save to localStorage
-      localStorage.setItem("candidateAffidavitStorageKey", mockResponse.storageKey)
-      localStorage.setItem("candidateAffidavitData", JSON.stringify(mockResponse.parsed))
+      localStorage.setItem("candidateAffidavitStorageKey", storageKey);
+      localStorage.setItem("candidateAffidavitData", JSON.stringify(parsed));
 
-      setResult(mockResponse.parsed)
+      setResult(parsed);
 
       if (onUploadSuccess) {
-        onUploadSuccess("new-upload-1") // Pass a mock ID for the new upload
+        onUploadSuccess(storageKey);
+        const response = await fetch(
+          "http://localhost:3001/save/save-analysis",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(parsed),
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.error || "Failed to save analysis to database"
+          );
+        }
+
+        navigate("/profile");
       }
     } catch (err) {
-      console.error(err)
-      setError("Failed to upload or parse resume.")
+      console.error(err);
+      setError(
+        err.response?.data?.error || "Failed to upload or parse resume."
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Function to clear stored data
   const clearStoredData = () => {
-    localStorage.removeItem("candidateAffidavitStorageKey")
-    localStorage.removeItem("candidateAffidavitData")
-    setResult(null)
-    setFile(null)
-  }
+    localStorage.removeItem("candidateAffidavitStorageKey");
+    localStorage.removeItem("candidateAffidavitData");
+    setResult(null);
+    setFile(null);
+  };
 
   return (
     <div className="w-full">
@@ -185,7 +171,7 @@ export default function ResumeUploader({ onUploadSuccess }) {
         <input
           type="file"
           id="resume-upload"
-          accept=".pdf"
+          accept=".pdf,.doc,.docx"
           onChange={(e) => setFile(e.target.files[0])}
           className="hidden"
         />
@@ -196,7 +182,9 @@ export default function ResumeUploader({ onUploadSuccess }) {
           Browse Files
         </label>
 
-        <p className="text-xs text-gray-500 mt-4">Accepted format: PDF</p>
+        <p className="text-xs text-gray-500 mt-4">
+          Accepted formats: PDF, DOC, DOCX
+        </p>
       </div>
 
       {file && (
@@ -218,7 +206,10 @@ export default function ResumeUploader({ onUploadSuccess }) {
             </svg>
             <span className="truncate max-w-xs">{file.name}</span>
           </div>
-          <button onClick={() => setFile(null)} className="text-red-500 hover:text-red-700">
+          <button
+            onClick={() => setFile(null)}
+            className="text-red-500 hover:text-red-700"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5"
@@ -226,7 +217,12 @@ export default function ResumeUploader({ onUploadSuccess }) {
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -246,7 +242,14 @@ export default function ResumeUploader({ onUploadSuccess }) {
                 fill="none"
                 viewBox="0 0 24 24"
               >
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
                 <path
                   className="opacity-75"
                   fill="currentColor"
@@ -272,5 +275,5 @@ export default function ResumeUploader({ onUploadSuccess }) {
 
       {error && <p className="text-red-500 mt-2">{error}</p>}
     </div>
-  )
+  );
 }
