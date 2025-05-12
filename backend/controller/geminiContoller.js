@@ -139,32 +139,53 @@ export const evaluateResume = async (req, res) => {
     const model = genAI.getGenerativeModel({ 
       model: "gemini-1.5-pro", 
       generationConfig: {
-        // Optional: Add some configuration to improve JSON response
         responseMimeType: "application/json",
         responseSchema: {
           type: "object",
           properties: {
-            full_name: { type: "string" },
-            email_address: { type: "string" },
-            phone_number: { type: "string" },
-            education: { type: "array", items: { type: "string" } },
-            skills: { type: "array", items: { type: "string" } },
-            work_experience: { type: "array", items: { type: "string" } },
-            summary: { type: "string" },
-            evaluation_score: { type: "number", minimum: 0, maximum: 10 },
-            evaluation_justification: { type: "string" }
+            Summary: {
+              type: "object",
+              properties: {
+                fullName: { type: "string" },
+                age: { type: "number" },
+                partyAffiliation: { type: "string" },
+                constituency: { type: "string" },
+                educationalBackground: { type: "string" },
+                professionalDetails: { type: "string" },
+                electionExperience: { type: "string" },
+                criminalCaseStatus: { type: "string" }
+              }
+            },
+            "Scoring Breakdown": {
+              type: "object",
+              properties: {
+                CriminalScore: { type: "number" },
+                FinancialScore: { type: "number" },
+                EducationScore: { type: "number" },
+                PerformanceScore: { type: "number" },
+                TotalScore: { type: "number" },
+                Assessment: { type: "string" }
+              }
+            },
+            "IPC Criminality Assessment": {
+              type: "object",
+              properties: {
+                IPCSections: { 
+                  type: "array", 
+                  items: { 
+                    type: "object",
+                    properties: {
+                      section: { type: "string" },
+                      severityLevel: { type: "string" },
+                      offenseSummary: { type: "string" }
+                    }
+                  }
+                },
+                LegalBackgroundJudgment: { type: "string" }
+              }
+            }
           },
-          required: [
-            "full_name", 
-            "email_address", 
-            "phone_number", 
-            "education", 
-            "skills", 
-            "work_experience", 
-            "summary", 
-            "evaluation_score", 
-            "evaluation_justification"
-          ]
+          required: ["Summary", "Scoring Breakdown", "IPC Criminality Assessment"]
         }
       }
     });
@@ -172,51 +193,59 @@ export const evaluateResume = async (req, res) => {
     // Prepare PDF as multimodal content part
     const filePart = fileToGenerativePart(fileBuffer, "application/pdf");
 
-    // Create detailed prompt with specific instructions
-    const prompt = `You are an AI resume evaluator specializing in technical roles. 
-Carefully analyze the uploaded PDF resume and extract the following information in a precise, structured manner:
+    // Create detailed prompt
+    const prompt = `You are an expert analyst reviewing an Indian election candidate's affidavit. Carefully examine the PDF document and provide a comprehensive analysis following these guidelines:
 
-1. Full Name: Extract the candidate's complete legal name
-2. Contact Information:
-   - Email Address (professional email preferred)
-   - Phone Number (with country code if possible)
-3. Education Details:
-   - Degree(s)
-   - Institution(s)
-   - Graduation Year(s)
-4. Technical Skills:
-   - Programming Languages
-   - Frameworks
-   - Tools
-   - Technologies
-5. Work Experience:
-   - Company Names
-   - Job Titles
-   - Key Responsibilities
-   - Notable Achievements
-6. Professional Summary:
-   - Brief overview of the candidate's professional background
-   - Key strengths and career objectives
+🟠 1. Candidate Summary:
+Generate a concise and readable summary of the candidate's profile. This summary should include:
+- Full name, age, party affiliation, and constituency.
+- Educational background.
+- Key professional and financial details.
+- Any previous election experience or results.
+- A brief mention (if applicable) of any criminal case status.
 
-7. Evaluation for Full Stack Developer Role:
-   - Provide a comprehensive score out of 10
-   - Consider factors like:
-     * Technical skills relevance
-     * Depth of experience
-     * Breadth of technologies
-     * Project complexity
-     * Potential for growth
+🟠 2. Candidate Scoring:
+Implement the following scoring system and return the score for each parameter, along with the final total score (max 100):
+🔹 Criminal Record (40% weight)
++10 for no criminal cases.
+-5 for pending criminal cases.
+-10 for serious criminal charges (e.g., murder, rape, kidnapping).
+-15 for criminal convictions.
 
-8. Detailed Evaluation Justification:
-   - Explain the reasoning behind the assigned score
-   - Highlight strengths and potential areas for improvement
+🔹 Financial Assets (25% weight)
++10 if assets are below ₹1 crore.
++5 if between ₹1 crore and ₹5 crore.
+0 if above ₹5 crore.
+-5 if there is significant asset increase without a clear source.
 
-IMPORTANT INSTRUCTIONS:
-- Be extremely precise and accurate
-- Only use information directly from the resume
-- If any information is missing, use "N/A" or leave as an empty string
-- Ensure the response is valid, parseable JSON
-- The evaluation should be objective and professional`;
+🔹 Educational Qualifications (20% weight)
++10 for Doctorate.
++8 for Postgraduate degree.
++5 for Graduate degree.
++2 for Below graduate level.
+0 for no formal education.
+-10 for false education declaration.
+
+🔹 Electoral Performance (15% weight)
++10 for past MP/MLA term with positive performance.
++5 for neutral performance.
++2 for no experience.
+0 for prior negative performance.
+
+Provide a scoring breakdown and an overall assessment.
+
+🟠 3. IPC-Based Criminality Assessment:
+Based on any IPC sections mentioned in the document, identify:
+- The legal names of those IPC sections.
+- The severity level: Petty, Cognizable, Non-bailable, Bailable, or Serious Crime.
+- A short summary of what kind of offense(s) they refer to.
+- Provide a judgment of whether the candidate's legal background poses a significant concern or is minor.
+
+🔍 IMPORTANT INSTRUCTIONS:
+- Be extremely precise and extract only information present in the document.
+- Use clear, objective language.
+- If any information is not clear or missing, state "Not Available" or provide the most accurate inference possible.
+- Ensure the response is a valid, well-structured JSON format.`;
 
     // Generate content with both text prompt and PDF file
     const result = await model.generateContent([prompt, filePart]);
@@ -226,23 +255,17 @@ IMPORTANT INSTRUCTIONS:
     response = response.replace(/```(json)?|```/g, "").trim();
 
     try {
-      // Parse the response, with fallback for potential parsing issues
+      // Parse the response
       const parsed = JSON.parse(response);
       
       // Validate the parsed JSON has all required keys
-      const requiredKeys = [
-        "full_name", 
-        "email_address", 
-        "phone_number", 
-        "education", 
-        "skills", 
-        "work_experience", 
-        "summary", 
-        "evaluation_score", 
-        "evaluation_justification"
+      const requiredTopLevelKeys = [
+        "Summary", 
+        "Scoring Breakdown", 
+        "IPC Criminality Assessment"
       ];
       
-      requiredKeys.forEach(key => {
+      requiredTopLevelKeys.forEach(key => {
         if (!parsed.hasOwnProperty(key)) {
           throw new Error(`Missing required key: ${key}`);
         }
@@ -264,12 +287,11 @@ IMPORTANT INSTRUCTIONS:
   } catch (error) {
     console.error("Gemini error:", error.message || error);
     res.status(500).json({ 
-      error: "Something went wrong with resume evaluation.",
+      error: "Something went wrong with affidavit analysis.",
       details: error.message 
     });
   }
 };
-
 
 
 // export const evaluateResume = async (req, res) => {
