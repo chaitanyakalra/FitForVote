@@ -99,6 +99,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import crypto from "crypto";
 
 // Handle __dirname in ES Module context
 const __filename = fileURLToPath(import.meta.url);
@@ -122,6 +123,11 @@ function fileToGenerativePart(buffer, mimeType) {
       mimeType
     },
   };
+}
+
+// Function to generate a unique storage key
+function generateStorageKey() {
+  return crypto.randomBytes(16).toString('hex');
 }
 
 export const evaluateResume = async (req, res) => {
@@ -227,7 +233,7 @@ export const evaluateResume = async (req, res) => {
     // Prepare PDF as multimodal content part
     const filePart = fileToGenerativePart(fileBuffer, "application/pdf");
 
-    // Create detailed prompt (same as before)
+    // Create detailed prompt
     const prompt = `You are an expert analyst reviewing an Indian election candidate's affidavit. Carefully examine the PDF document and provide a comprehensive analysis following these guidelines:
 
 🟠 1. Candidate Summary:
@@ -315,7 +321,15 @@ Based on any IPC sections mentioned in the document, identify:
         ipcCriminalityAssessment: parsed.ipcCriminalityAssessment || parsed.IPCCriminalityAssessment
       };
 
-      res.json({ parsed: normalizedParsed });
+      // Generate a unique storage key
+      const storageKey = generateStorageKey();
+
+      // Store the parsed data in server-side storage or database (optional)
+      // For this example, we'll just pass the key back to the client
+      res.json({ 
+        storageKey,
+        parsed: normalizedParsed 
+      });
     } catch (parseError) {
       console.error("JSON parse error:", parseError.message);
       console.error("Gemini raw response:", response);

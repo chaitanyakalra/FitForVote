@@ -59,8 +59,7 @@
 //   );
 // }
 
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 export default function ResumeUploader() {
@@ -68,6 +67,23 @@ export default function ResumeUploader() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Load saved result from localStorage on component mount
+  useEffect(() => {
+    const storedStorageKey = localStorage.getItem('candidateAffidavitStorageKey');
+    const storedResult = localStorage.getItem('candidateAffidavitData');
+
+    if (storedStorageKey && storedResult) {
+      try {
+        setResult(JSON.parse(storedResult));
+      } catch (parseError) {
+        console.error("Error parsing saved result:", parseError);
+        // Clear invalid stored data
+        localStorage.removeItem('candidateAffidavitStorageKey');
+        localStorage.removeItem('candidateAffidavitData');
+      }
+    }
+  }, []);
 
   const handleUpload = async () => {
     if (!file) {
@@ -97,7 +113,14 @@ export default function ResumeUploader() {
         },
       });
       
-      setResult(res.data.parsed);
+      // Store both the storage key and the parsed data
+      const { storageKey, parsed } = res.data;
+      
+      // Save to localStorage
+      localStorage.setItem('candidateAffidavitStorageKey', storageKey);
+      localStorage.setItem('candidateAffidavitData', JSON.stringify(parsed));
+      
+      setResult(parsed);
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.error || "Failed to upload or parse resume.");
@@ -106,12 +129,19 @@ export default function ResumeUploader() {
     }
   };
 
+  // Function to clear stored data
+  const clearStoredData = () => {
+    localStorage.removeItem('candidateAffidavitStorageKey');
+    localStorage.removeItem('candidateAffidavitData');
+    setResult(null);
+  };
+  
   return (
     <div className="p-4 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Resume Evaluator</h1>
+      <h1 className="text-2xl font-bold mb-4">Candidate Affidavit Analyzer</h1>
       
       <div className="mb-4">
-        <label className="block text-sm font-medium mb-2">Upload Resume</label>
+        <label className="block text-sm font-medium mb-2">Upload Affidavit</label>
         <input 
           type="file" 
           accept=".pdf,.doc,.docx" 
@@ -126,52 +156,75 @@ export default function ResumeUploader() {
         onClick={handleUpload} 
         disabled={loading || !file}
       >
-        {loading ? "Processing..." : "Evaluate Resume"}
+        {loading ? "Processing..." : "Analyze Affidavit"}
       </button>
       
       {error && <p className="text-red-500 mt-2">{error}</p>}
       
       {result && (
         <div className="mt-6">
-          <h2 className="text-xl font-semibold mb-3">Evaluation Results</h2>
+          <h2 className="text-xl font-semibold mb-3">Candidate Analysis</h2>
           <div className="bg-gray-50 p-4 rounded border">
-            <h3 className="font-bold text-lg">{result.full_name}</h3>
-            <p className="text-sm">{result.email_address} • {result.phone_number}</p>
-            
-            <div className="mt-4">
-              <h4 className="font-semibold">Score: <span className="text-blue-600">{result.evaluation_score}/10</span></h4>
-              <p className="text-sm mt-1">{result.evaluation_justification}</p>
+            {/* Candidate Summary Section */}
+            <div className="mb-4">
+              <h3 className="font-bold text-lg">Candidate Summary</h3>
+              <p><strong>Name:</strong> {result.summary.fullName}</p>
+              <p><strong>Age:</strong> {result.summary.age}</p>
+              <p><strong>Constituency:</strong> {result.summary.constituency}</p>
+              <p><strong>Party:</strong> {result.summary.partyAffiliation}</p>
             </div>
-            
-            <div className="mt-4">
-              <button 
-                onClick={() => setResult(null)} 
-                className="text-sm text-gray-600 underline"
-              >
-                Clear Results
-              </button>
+
+            {/* Scoring Breakdown Section */}
+            <div className="mb-4">
+              <h3 className="font-bold text-lg">Scoring Breakdown</h3>
+              <p><strong>Total Score:</strong> {result.scoringBreakdown.totalScore}/100</p>
+              <p><strong>Assessment:</strong> {result.scoringBreakdown.assessment}</p>
+              <div className="pl-4">
+                <p>Criminal Score: {result.scoringBreakdown.criminalScore}</p>
+                <p>Financial Score: {result.scoringBreakdown.financialScore}</p>
+                <p>Education Score: {result.scoringBreakdown.educationScore}</p>
+                <p>Performance Score: {result.scoringBreakdown.performanceScore}</p>
+              </div>
+            </div>
+
+            {/* IPC Criminality Assessment Section */}
+            <div className="mb-4">
+              <h3 className="font-bold text-lg">IPC Criminality Assessment</h3>
+              <p><strong>Legal Background Judgment:</strong> {result.ipcCriminalityAssessment.legalBackgroundJudgment}</p>
+              <h4 className="font-semibold mt-2">IPC Sections:</h4>
+              <ul className="list-disc pl-5">
+                {result.ipcCriminalityAssessment.ipcSections.map((section, index) => (
+                  <li key={index}>
+                    <strong>Section {section.section}:</strong> {section.offenseSummary} 
+                    <span className="ml-2 text-sm text-gray-600">(Severity: {section.severityLevel})</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-4 flex space-x-2">
               <button 
                 onClick={() => {
                   const element = document.createElement("a");
                   const file = new Blob([JSON.stringify(result, null, 2)], {type: "application/json"});
                   element.href = URL.createObjectURL(file);
-                  element.download = `${result.full_name.replace(/\s/g, "_")}_evaluation.json`;
+                  element.download = `${result.summary.fullName.replace(/\s/g, "_")}_analysis.json`;
                   document.body.appendChild(element);
                   element.click();
                 }} 
-                className="text-sm text-blue-600 underline ml-4"
+                className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
               >
                 Download JSON
               </button>
+              <button 
+                onClick={clearStoredData}
+                className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+              >
+                Clear Stored Data
+              </button>
             </div>
           </div>
-          
-          <details className="mt-4 border rounded">
-            <summary className="p-2 bg-gray-50 cursor-pointer">View Full Details</summary>
-            <pre className="p-4 overflow-auto text-sm max-h-96">
-              {JSON.stringify(result, null, 2)}
-            </pre>
-          </details>
         </div>
       )}
     </div>
