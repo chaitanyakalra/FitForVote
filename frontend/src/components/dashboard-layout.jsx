@@ -1,18 +1,20 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+// import { useNavigate, useLocation } from "react-router-dom";
 
 export default function DashboardLayout({ children }) {
-  const router = useRouter()
-  const navigate = useNavigate()
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
     <div className="min-h-screen bg-[#f7f9fc] flex">
       {/* Sidebar */}
       <div
-        className={`bg-[#1b1f3a] text-white transition-all duration-300 ${isSidebarOpen ? "w-64" : "w-20"} min-h-screen fixed`}
+        className={`bg-[#1b1f3a] text-white transition-all duration-300 ${
+          isSidebarOpen ? "w-64" : "w-20"
+        } min-h-screen fixed`}
       >
         <div className="p-4 flex items-center justify-between">
           {isSidebarOpen ? (
@@ -20,7 +22,10 @@ export default function DashboardLayout({ children }) {
           ) : (
             <span className="font-bold text-lg">CS</span>
           )}
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-white focus:outline-none">
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="text-white focus:outline-none"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6"
@@ -29,9 +34,19 @@ export default function DashboardLayout({ children }) {
               stroke="currentColor"
             >
               {isSidebarOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+                />
               ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 5l7 7-7 7M5 5l7 7-7 7"
+                />
               )}
             </svg>
           </button>
@@ -40,7 +55,10 @@ export default function DashboardLayout({ children }) {
         <nav className="mt-8">
           <ul>
             <li>
-              <Link href="/dashboard" className="flex items-center py-3 px-4 hover:bg-[#2d3250] transition-colors">
+              <a
+                href="/dashboard"
+                className="flex items-center py-3 px-4 hover:bg-[#2d3250] transition-colors"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-5 w-5 mr-3"
@@ -56,10 +74,13 @@ export default function DashboardLayout({ children }) {
                   />
                 </svg>
                 {isSidebarOpen && <span>Dashboard</span>}
-              </Link>
+              </a>
             </li>
             <li>
-              <Link href="/upload" className="flex items-center py-3 px-4 hover:bg-[#2d3250] transition-colors">
+              <a
+                href="/upload"
+                className="flex items-center py-3 px-4 hover:bg-[#2d3250] transition-colors"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-5 w-5 mr-3"
@@ -75,10 +96,13 @@ export default function DashboardLayout({ children }) {
                   />
                 </svg>
                 {isSidebarOpen && <span>Upload Resume</span>}
-              </Link>
+              </a>
             </li>
             <li>
-              <Link href="/" className="flex items-center py-3 px-4 hover:bg-[#2d3250] transition-colors">
+              <a
+                href="/"
+                className="flex items-center py-3 px-4 hover:bg-[#2d3250] transition-colors"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-5 w-5 mr-3"
@@ -94,14 +118,20 @@ export default function DashboardLayout({ children }) {
                   />
                 </svg>
                 {isSidebarOpen && <span>Home</span>}
-              </Link>
+              </a>
             </li>
           </ul>
         </nav>
       </div>
 
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"} flex-1`}>{children}</div>
+      <div
+        className={`transition-all duration-300 ${
+          isSidebarOpen ? "ml-64" : "ml-20"
+        } flex-1`}
+      >
+        {children}
+      </div>
     </div>
-  )
+  );
 }
