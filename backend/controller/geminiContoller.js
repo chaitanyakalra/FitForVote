@@ -39,10 +39,10 @@
 
 //     // Read file buffer
 //     const fileBuffer = fs.readFileSync(file.path);
-    
+
 //     // Get Gemini model that supports multimodal input
 //     const model = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
-    
+
 //     // Prepare PDF as multimodal content part
 //     const filePart = fileToGenerativePart(fileBuffer, "application/pdf");
 
@@ -72,10 +72,10 @@
 //     // Generate content with both text prompt and PDF file
 //     const result = await model.generateContent([prompt, filePart]);
 //     let response = await result.response.text();
-    
+
 //     // Clean response: remove markdown code block formatting if present
 //     response = response.replace(/```json|```/g, "").trim();
-    
+
 //     try {
 //       const parsed = JSON.parse(response);
 //       res.json({ parsed });
@@ -84,10 +84,10 @@
 //       console.error("Gemini raw response:", response); // For debugging
 //       res.status(500).json({ error: "Failed to parse Gemini response as JSON." });
 //     }
-    
+
 //     // Clean up: remove uploaded file after processing
 //     fs.unlinkSync(file.path);
-    
+
 //   } catch (error) {
 //     console.error("Gemini error:", error.message || error);
 //     res.status(500).json({ error: "Something went wrong with resume evaluation." });
@@ -136,14 +136,14 @@ export const evaluateResume = async (req, res) => {
     const fileBuffer = fs.readFileSync(file.path);
 
     // Use the latest recommended model
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-pro", 
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-pro",
       generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
           type: "object",
           properties: {
-            Summary: {
+            summary: {
               type: "object",
               properties: {
                 fullName: { type: "string" },
@@ -154,38 +154,72 @@ export const evaluateResume = async (req, res) => {
                 professionalDetails: { type: "string" },
                 electionExperience: { type: "string" },
                 criminalCaseStatus: { type: "string" }
-              }
+              },
+              required: [
+                "fullName",
+                "age",
+                "partyAffiliation",
+                "constituency",
+                "educationalBackground",
+                "professionalDetails",
+                "electionExperience",
+                "criminalCaseStatus"
+              ]
             },
-            "Scoring Breakdown": {
+            scoringBreakdown: {
               type: "object",
               properties: {
-                CriminalScore: { type: "number" },
-                FinancialScore: { type: "number" },
-                EducationScore: { type: "number" },
-                PerformanceScore: { type: "number" },
-                TotalScore: { type: "number" },
-                Assessment: { type: "string" }
-              }
+                criminalScore: { type: "number" },
+                financialScore: { type: "number" },
+                educationScore: { type: "number" },
+                performanceScore: { type: "number" },
+                totalScore: { type: "number" },
+                assessment: {
+                  type: "string",
+                  enum: ["Excellent", "Good", "Average", "Poor"]
+                }
+              },
+              required: [
+                "criminalScore",
+                "financialScore",
+                "educationScore",
+                "performanceScore",
+                "totalScore",
+                "assessment"
+              ]
             },
-            "IPC Criminality Assessment": {
+            ipcCriminalityAssessment: {
               type: "object",
               properties: {
-                IPCSections: { 
-                  type: "array", 
-                  items: { 
+                ipcSections: {
+                  type: "array",
+                  items: {
                     type: "object",
                     properties: {
                       section: { type: "string" },
-                      severityLevel: { type: "string" },
+                      severityLevel: {
+                        type: "string",
+                        enum: [
+                          "Petty",
+                          "Moderate",
+                          "Cognizable",
+                          "Non-Cognizable",
+                          "Bailable",
+                          "Non-Bailable",
+                          "Serious"
+                        ]
+                      },
                       offenseSummary: { type: "string" }
-                    }
+                    },
+                    required: ["section", "severityLevel", "offenseSummary"]
                   }
                 },
-                LegalBackgroundJudgment: { type: "string" }
-              }
+                legalBackgroundJudgment: { type: "string" }
+              },
+              required: ["ipcSections", "legalBackgroundJudgment"]
             }
           },
-          required: ["Summary", "Scoring Breakdown", "IPC Criminality Assessment"]
+          required: ["summary", "scoringBreakdown", "ipcCriminalityAssessment"]
         }
       }
     });
@@ -193,7 +227,7 @@ export const evaluateResume = async (req, res) => {
     // Prepare PDF as multimodal content part
     const filePart = fileToGenerativePart(fileBuffer, "application/pdf");
 
-    // Create detailed prompt
+    // Create detailed prompt (same as before)
     const prompt = `You are an expert analyst reviewing an Indian election candidate's affidavit. Carefully examine the PDF document and provide a comprehensive analysis following these guidelines:
 
 🟠 1. Candidate Summary:
@@ -257,25 +291,35 @@ Based on any IPC sections mentioned in the document, identify:
     try {
       // Parse the response
       const parsed = JSON.parse(response);
-      
-      // Validate the parsed JSON has all required keys
+
+      // Validate the parsed JSON has all required keys (case-insensitive)
       const requiredTopLevelKeys = [
-        "Summary", 
-        "Scoring Breakdown", 
-        "IPC Criminality Assessment"
+        "summary",
+        "scoringBreakdown",
+        "ipcCriminalityAssessment"
       ];
+
+      // Create a case-insensitive check
+      const parsedKeys = Object.keys(parsed).map(key => key.toLowerCase());
       
       requiredTopLevelKeys.forEach(key => {
-        if (!parsed.hasOwnProperty(key)) {
+        if (!parsedKeys.includes(key.toLowerCase())) {
           throw new Error(`Missing required key: ${key}`);
         }
       });
 
-      res.json({ parsed });
+      // Normalize keys to match the expected structure
+      const normalizedParsed = {
+        summary: parsed.summary || parsed.Summary,
+        scoringBreakdown: parsed.scoringBreakdown || parsed.ScoringBreakdown,
+        ipcCriminalityAssessment: parsed.ipcCriminalityAssessment || parsed.IPCCriminalityAssessment
+      };
+
+      res.json({ parsed: normalizedParsed });
     } catch (parseError) {
       console.error("JSON parse error:", parseError.message);
       console.error("Gemini raw response:", response);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to parse Gemini response. Please try again.",
         rawResponse: response
       });
@@ -286,9 +330,9 @@ Based on any IPC sections mentioned in the document, identify:
 
   } catch (error) {
     console.error("Gemini error:", error.message || error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Something went wrong with affidavit analysis.",
-      details: error.message 
+      details: error.message
     });
   }
 };
