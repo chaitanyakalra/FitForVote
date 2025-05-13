@@ -525,7 +525,7 @@ export default function ResumeUploader({ onUploadSuccess }) {
           >
             <li>
               <a
-                href="/dashboard"
+                onClick={() => navigate("/dashboard")}                
                 style={{
                   display: "flex",
                   alignItems: "center",
