@@ -35,7 +35,7 @@ function App() {
     <div className="app">
       <Routes>
         {/* Landing Page */}
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/Landing" element={<LandingPage />} />
 
         {/* TESTING */}
         <Route path="/old" element={<ResumeUploader2 />} />
@@ -75,7 +75,7 @@ function App() {
 
         {/* Resume Upload */}
         <Route
-          path="/upload"
+          path="/"
           element={
             <DashboardLayout>
               <div className="max-w-4xl mx-auto p-6">
