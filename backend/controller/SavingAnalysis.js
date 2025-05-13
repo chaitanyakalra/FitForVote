@@ -1,6 +1,7 @@
 import { Router } from "express";
 const router = Router();
 import SaveAnalysis from "../models/SaveAnalysis.js";
+import CandidateAffidavitAnalysis from "../models/SaveAnalysis.js";
 
 // POST route to save candidate affidavit analysis from Gemini API
 router.post("/save-analysis", async (req, res) => {
@@ -49,6 +50,50 @@ router.post("/save-analysis", async (req, res) => {
 
     res.status(500).json({ error: "Failed to save analysis" });
   }
+});
+
+// GET route to retrieve all analyses (with optional filtering)
+router.get('/analyses', async (req, res) => {
+  try {
+    // Extract query parameters for filtering
+    const { constituency, party, minScore, maxScore } = req.query;
+    
+    // Build filter object
+    const filter = {};
+    
+    if (constituency) {
+      filter['summary.constituency'] = { $regex: constituency, $options: 'i' };
+    }
+    
+    if (party) {
+      filter['summary.partyAffiliation'] = { $regex: party, $options: 'i' };
+    }
+    
+    // Add score range filter if provided
+    if (minScore !== undefined || maxScore !== undefined) {
+      filter['scoringBreakdown.totalScore'] = {};
+      
+      if (minScore !== undefined) {
+        filter['scoringBreakdown.totalScore'].$gte = parseInt(minScore);
+      }
+      
+      if (maxScore !== undefined) {
+        filter['scoringBreakdown.totalScore'].$lte = parseInt(maxScore);
+      }
+    }
+    
+    // Query with filters and sort by score in descending order
+    const analyses = await CandidateAffidavitAnalysis
+      .find(filter)
+      .sort({ 'scoringBreakdown.totalScore': -1 })
+      .limit(100); // Limit results to prevent overload
+    
+    res.status(200).json(analyses);
+    
+  } catch (error) {
+    console.error('Error retrieving analyses:', error);
+    res.status(500).json({ error: 'Failed to retrieve analyses' });
+  }
 });
 
 export default router;

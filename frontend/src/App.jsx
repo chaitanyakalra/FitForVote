@@ -43,11 +43,15 @@ function App() {
         <Route path="/legal" element={<LegalAssessmentCard />} />
         <Route path="/profile" element={<CandidateProfile />} />
         <Route path="/score" element={<ScoreBreakdownCard />} />
+        
+        <Route path="/dashboard" element={<DashboardLayout />} />
+        <Route path="/" element={<ResumeUploader/>} />
+
 
         {/* <ResumeUploader2 /> */}
 
         {/* Dashboard */}
-        <Route
+        {/* <Route
           path="/dashboard"
           element={
             <DashboardLayout>
@@ -57,24 +61,14 @@ function App() {
               </div>
             </DashboardLayout>
           }
-        />
+        /> */}
 
-        {/* Candidate Profile */}
-        <Route
-          path="/dashboard/candidate/:id"
-          element={
-            <DashboardLayout>
-              {candidates.length > 0 && (
-                <CandidateProfile candidate={candidates[0]} />
-              )}
-            </DashboardLayout>
-          }
-        />
+        
 
         
 
         {/* Resume Upload */}
-        <Route
+        {/* <Route
           path="/"
           element={
             <DashboardLayout>
@@ -88,7 +82,19 @@ function App() {
               </div>
             </DashboardLayout>
           }
-        />
+        /> */}
+
+        {/* Candidate Profile */}
+        {/* <Route
+          path="/dashboard/candidate/:id"
+          element={
+            <DashboardLayout>
+              {candidates.length > 0 && (
+                <CandidateProfile candidate={candidates[0]} />
+              )}
+            </DashboardLayout>
+          }
+        /> */}
 
         {/* Fallback for direct ResumeUploader access (your original view) */}
         <Route
