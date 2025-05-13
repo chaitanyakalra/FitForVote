@@ -45,7 +45,7 @@ function App() {
         <Route path="/score" element={<ScoreBreakdownCard />} />
         
         <Route path="/dashboard" element={<DashboardLayout />} />
-        <Route path="/" element={<ResumeUploader/>} />
+        <Route path="/" element={<ResumeUploader onUploadSuccess={(id) => console.log("Upload success:", id)} />} />
 
 
         {/* <ResumeUploader2 /> */}

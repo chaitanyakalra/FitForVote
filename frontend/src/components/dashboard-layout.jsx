@@ -372,7 +372,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
-export default function DashboardLayout({ children }) {
+export default function DashboardLayout() {
   const navigate = useNavigate()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [data, setData] = useState(null)

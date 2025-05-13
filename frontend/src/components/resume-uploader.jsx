@@ -292,6 +292,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import axios from "axios"
+import { config } from "dotenv"
 
 export default function ResumeUploader({ onUploadSuccess }) {
   const [file, setFile] = useState(null)
@@ -305,15 +306,16 @@ export default function ResumeUploader({ onUploadSuccess }) {
   const [data, setData] = useState(null)
   // const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    // Access the environment variable
-    const backendUrl = import.meta.env.VITE_BACKEND_URL
-    console.log(backendUrl) // Should log the URL you set in the .env file
-    console.log("process", import.meta.env.VITE_BACKEND_URL)
-  }, [])
+  // useEffect(() => {
+  //   // Access the environment variable
+  //   const backendUrl = import.meta.env.VITE_BACKEND_URL
+  //   console.log(backendUrl) // Should log the URL you set in the .env file
+  //   console.log("process", import.meta.env.VITE_BACKEND_URL)
+  // }, [])
 
   // Load saved result from localStorage on component mount
   useEffect(() => {
+    
     const storedStorageKey = localStorage.getItem("candidateAffidavitStorageKey")
     const storedResult = localStorage.getItem("candidateAffidavitData")
 
@@ -322,6 +324,7 @@ export default function ResumeUploader({ onUploadSuccess }) {
         const parsedResult = JSON.parse(storedResult)
         setResult(parsedResult)
         if (onUploadSuccess) {
+          
           onUploadSuccess(storedStorageKey) // Pass the actual storage key
         }
       } catch (parseError) {
@@ -355,6 +358,8 @@ export default function ResumeUploader({ onUploadSuccess }) {
   }
 
   const handleUpload = async () => {
+
+    console.log("Fileupload ")
     if (!file) {
       setError("Please select a file.")
       return
@@ -390,6 +395,7 @@ export default function ResumeUploader({ onUploadSuccess }) {
       setResult(parsed)
 
       if (onUploadSuccess) {
+       
         onUploadSuccess(storageKey)
         const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/save/save-analysis`, {
           method: "POST",

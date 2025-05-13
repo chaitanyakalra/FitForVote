@@ -2332,7 +2332,7 @@ export default function CandidateProfile() {
               alignItems: "center",
             }}
           >
-            <span
+            {/* <span
               style={{
                 backgroundColor: "#dbeafe",
                 color: "#1e40af",
@@ -2379,15 +2379,15 @@ export default function CandidateProfile() {
                 />
               </svg>
               Powered by Gemini AI
-            </span>
-            <span
+            </span> */}
+            {/* <span
               style={{
                 fontSize: "12px",
                 color: "#64748b",
               }}
             >
               Analysis completed in 2.3 seconds
-            </span>
+            </span> */}
           </div>
 
           <div
