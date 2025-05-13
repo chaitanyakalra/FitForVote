@@ -292,7 +292,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import axios from "axios"
-import { config } from "dotenv"
+// import { config } from "dotenv"
 
 export default function ResumeUploader({ onUploadSuccess }) {
   const [file, setFile] = useState(null)
@@ -306,12 +306,12 @@ export default function ResumeUploader({ onUploadSuccess }) {
   const [data, setData] = useState(null)
   // const [loading, setLoading] = useState(true)
 
-  // useEffect(() => {
-  //   // Access the environment variable
-  //   const backendUrl = import.meta.env.VITE_BACKEND_URL
-  //   console.log(backendUrl) // Should log the URL you set in the .env file
-  //   console.log("process", import.meta.env.VITE_BACKEND_URL)
-  // }, [])
+  useEffect(() => {
+    // Access the environment variable
+    const backendUrl = import.meta.env.VITE_BACKEND_URL
+    console.log(backendUrl) // Should log the URL you set in the .env file
+    console.log("process", import.meta.env.VITE_BACKEND_URL)
+  }, [])
 
   // Load saved result from localStorage on component mount
   useEffect(() => {
