@@ -380,7 +380,7 @@ export default function DashboardLayout({ children }) {
 
   useEffect(() => {
     setLoading(true)
-    fetch("http://localhost:3001/save/analyses")
+    fetch(`${import.meta.env.VITE_BACKEND_URL}/save/analyses`)
       .then((response) => {
         const contentType = response.headers.get("content-type")
         if (contentType && contentType.includes("application/json")) {
